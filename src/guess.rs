@@ -2,10 +2,11 @@ use piston_window::{Key, types::Color, Context, G2d};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_EMPTY, SPACING, draw::{draw_block, draw_rectangle}};
+use crate::{COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_EMPTY, SPACING, draw::{draw_rectangle, draw_big_block}, FIELD_SIZE};
 
 const COLOR_CURRENT_POSITION: Color = [0.2, 0.2, 0.2, 0.5];
 const SIZE: i32 = 4;
+const FLASH_TIMER: i32 = 4;
 
 #[derive(PartialEq, EnumIter, Debug, Copy, Clone)]
 pub enum Colors {
@@ -15,12 +16,36 @@ pub enum Colors {
     Green,
 }
 
+impl Colors {
+    pub fn return_color(&self) -> Color {
+        match self {
+            Colors::Empty => COLOR_EMPTY,
+            Colors::Red => COLOR_RED,
+            Colors::Blue => COLOR_BLUE,
+            Colors::Green => COLOR_GREEN,
+        }
+    }
+}
+
+impl Colors {
+    pub fn create_color_list() -> Vec<Colors> {
+        let mut color_options = vec![];
+        for color in Colors::iter() {
+            color_options.push(color);
+        }
+        return color_options;
+    }
+}
+
 pub struct GuessInputField {
     fields: Vec<Colors>,
     color_options: Vec<Colors>,
-    empty: bool,
     ready: bool,
+    send_guess: bool,
     current_position: usize,
+
+    flashing_visible: bool,
+    flash_timer: i32,
 
     gui_position_x: i32,
     gui_position_y: i32,
@@ -33,13 +58,25 @@ impl GuessInputField {
             fields.push(Colors::Empty);
         }
 
-        let mut color_options = vec![];
-        for color in Colors::iter() {
-            color_options.push(color);
-        }
+        let color_options = Colors::create_color_list();
 
-        return GuessInputField { fields, color_options, empty: true, ready: false , current_position: 0, gui_position_x, gui_position_y};
+        return GuessInputField { fields, color_options, ready: false, send_guess: false, current_position: 0, flashing_visible: true, flash_timer: FLASH_TIMER, gui_position_x, gui_position_y};
     }
+
+    pub fn get_send_guess(&self) -> bool {
+        self.send_guess
+    }
+
+    pub fn get_guess(&self) -> &Vec<Colors> {
+        &self.fields
+    }
+
+    pub fn reset_guess(&mut self) {
+        self.fields = vec![Colors::Empty; 4];
+        self.ready = false;
+        self.send_guess = false;
+    }
+
 
     pub fn key_pressed(&mut self, key: Key) {
         match key {
@@ -48,7 +85,7 @@ impl GuessInputField {
             Key::Up => self.change_color(1), // choose Color 
             Key::Down => self.change_color(-1), // choose Color 
             Key::H => todo!(), //print help message
-            Key::Return => todo!(), // if on ready block set ready
+            Key::Return => self.send_guess(), // if on ready block set ready
             _ => {},
         }
         // update the view here? or in game?
@@ -57,12 +94,7 @@ impl GuessInputField {
     pub fn draw(&self, con: &Context, g: &mut G2d) {
         let mut i = 0;
         for block in &self.fields {
-            match block {
-                Colors::Empty => draw_block(COLOR_EMPTY, self.gui_position_x + i * SPACING, self.gui_position_y, con, g),
-                Colors::Red => draw_block(COLOR_RED, self.gui_position_x + i * SPACING, self.gui_position_y, con, g),
-                Colors::Blue => draw_block(COLOR_BLUE, self.gui_position_x + i * SPACING, self.gui_position_y, con, g),
-                Colors::Green => draw_block(COLOR_GREEN, self.gui_position_x + i * SPACING, self.gui_position_y, con, g),
-            }
+            draw_big_block(block.return_color(), self.gui_position_x + i * SPACING + i * FIELD_SIZE, self.gui_position_y, con, g);
             i += 1;
         }
         // draw enterBlock
@@ -70,16 +102,39 @@ impl GuessInputField {
             true => COLOR_GREEN,
             false => COLOR_RED,
         };
-        draw_rectangle(color, self.gui_position_x + i * SPACING, self.gui_position_y, 2, 1, con, g);
+        draw_rectangle(color, self.gui_position_x + i * SPACING + i * FIELD_SIZE, self.gui_position_y - 1, 2, 3, con, g);
         // draw current position
-        if self.current_position == 4 {
-            draw_rectangle(COLOR_CURRENT_POSITION, self.gui_position_x + i * SPACING, self.gui_position_y, 2, 1, con, g);
+        if self.flashing_visible {
+            if self.current_position == 4 {
+                draw_rectangle(COLOR_CURRENT_POSITION, self.gui_position_x + i * SPACING + i * FIELD_SIZE, self.gui_position_y - 1, 2, 3, con, g);
+            } else {
+                draw_big_block(COLOR_CURRENT_POSITION, self.gui_position_x + (self.current_position as i32) * SPACING + (self.current_position as i32) * FIELD_SIZE, self.gui_position_y, con, g);
+            }
+        }
+    }
+
+    pub fn update(&mut self) {
+        if !self.fields.contains(&Colors::Empty) {
+            self.ready = true;
         } else {
-            draw_block(COLOR_CURRENT_POSITION, self.gui_position_x + (self.current_position as i32) * SPACING, self.gui_position_y, con, g);
+            self.ready = false;
+        }
+        // allow to flash
+        if self.flash_timer <=0 {
+            self.flashing_visible = !self.flashing_visible;
+            self.flash_timer = FLASH_TIMER;
+        }
+        self.flash_timer -= 1;
+    }
+
+    fn send_guess(&mut self) {
+        if self.current_position == 4 && self.ready {
+            self.send_guess = true
         }
     }
 
     fn move_current_position(&mut self, dir: i32) {
+        println!("Key_pressed");
         if dir == -1 && self.current_position > 0 {
             self.current_position -= 1
         } else if dir == 1 && self.current_position < 4 {
@@ -104,4 +159,5 @@ impl GuessInputField {
         self.fields[self.current_position] = self.color_options[index];
         println!("{:?}", self.fields[self.current_position]);
     }
+
 }

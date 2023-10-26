@@ -1,9 +1,11 @@
 extern crate piston_window;
 extern crate rand;
 
-use piston_window::types::Color;
+use piston_window::{types::Color, PistonWindow, WindowSettings, Button, PressEvent, clear, UpdateEvent};
 
-use crate::guess::GuessInputField;
+use crate::game::Game;
+
+use draw::to_coord_u32;
 
 mod draw;
 mod guess;
@@ -13,15 +15,30 @@ pub const COLOR_GREEN: Color = [0.0, 0.8, 0.0, 1.0];
 pub const COLOR_RED: Color = [0.8, 0.0, 0.0, 1.0];
 pub const COLOR_BLUE: Color = [0.0, 0.0, 0.8, 1.0];
 pub const COLOR_EMPTY: Color = [0.8, 0.8, 0.8, 1.0];
-pub const SPACING: i32 = 5;
+pub const SPACING: i32 = 3;
+pub const FIELD_SIZE: i32 = 2;
 
 const BACK_COLOR: Color = [0.5, 0.5, 0.5, 1.0];
 
 fn main() {
-    let v = vec![1, 2, 3, 4, 5];
-    let index = v.iter().position(|&x| x == 3).unwrap();
-    println!("element at {}: {}", index, v[index]);
+    let (width, height) = (24, 39);
+    let mut window: PistonWindow = WindowSettings::new("Mastermind", [to_coord_u32(width), to_coord_u32(height)]).exit_on_esc(true)
+    .build()
+    .unwrap();
 
-    let mut guess = GuessInputField::new(40, 40);
-    guess.change_color(-1);
+    let mut game = Game::new(width, height, 6);
+    while let Some(event) = window.next() {
+        if let Some(Button::Keyboard(key)) = event.press_args() {
+            game.key_pressed(key);
+        }
+
+        window.draw_2d(&event, |c, g, _| {
+            clear(BACK_COLOR, g);
+            game.draw(&c, g);
+        });
+
+        event.update(|args| {
+            game.update(args.dt);
+        });
+    }
 }
