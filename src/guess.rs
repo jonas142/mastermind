@@ -2,7 +2,7 @@ use piston_window::{Key, types::Color, Context, G2d};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_EMPTY, SPACING, draw::{draw_rectangle, draw_big_block}, FIELD_SIZE};
+use crate::{COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_EMPTY, SPACING, draw::{draw_rectangle, draw_big_block}, FIELD_SIZE, COLOR_YELLOW, COLOR_BLACK};
 
 const COLOR_CURRENT_POSITION: Color = [0.2, 0.2, 0.2, 0.5];
 const SIZE: i32 = 4;
@@ -14,6 +14,8 @@ pub enum Colors {
     Red,
     Blue,
     Green,
+    Yellow,
+    Black,
 }
 
 impl Colors {
@@ -23,6 +25,8 @@ impl Colors {
             Colors::Red => COLOR_RED,
             Colors::Blue => COLOR_BLUE,
             Colors::Green => COLOR_GREEN,
+            Colors::Yellow => COLOR_YELLOW,
+            Colors::Black => COLOR_BLACK,
         }
     }
 }

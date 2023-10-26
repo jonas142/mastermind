@@ -109,7 +109,10 @@ impl Game {
             // set validation pins
             todo!();
             // add guess to guessed
-            todo!();
+            for i in 0..4 {
+                self.guessed[self.guess_pointer][i].color = current_guess[i];
+            }
+            self.guess_pointer += 1;
         }
 
         self.waiting_time = 0.0;

@@ -11,9 +11,11 @@ mod draw;
 mod guess;
 mod game;
 
-pub const COLOR_GREEN: Color = [0.0, 0.8, 0.0, 1.0];
 pub const COLOR_RED: Color = [0.8, 0.0, 0.0, 1.0];
+pub const COLOR_GREEN: Color = [0.0, 0.8, 0.0, 1.0];
 pub const COLOR_BLUE: Color = [0.0, 0.0, 0.8, 1.0];
+pub const COLOR_YELLOW: Color = [0.8, 0.8, 0.0, 1.0];
+pub const COLOR_BLACK: Color = [0.0, 0.0, 0.0, 1.0];
 pub const COLOR_EMPTY: Color = [0.8, 0.8, 0.8, 1.0];
 pub const SPACING: i32 = 3;
 pub const FIELD_SIZE: i32 = 2;
