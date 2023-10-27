@@ -327,16 +327,13 @@ impl Game {
 
     fn create_new_secret(debug: bool) -> Vec<SecretField> {
         let color_options = Colors::create_color_list();
-
-        let mut s = 0;
         let mut rng = thread_rng();
         let mut secret = vec![];
         for i in 0..4 {
-            s = rng.gen_range(1..(color_options.len() - 1));
             secret.push(SecretField {
                 x: 1 + i * FIELD_SIZE + i * SPACING,
                 y: 1,
-                color: color_options[s],
+                color: color_options[rng.gen_range(1..(color_options.len() - 1))],
                 show_color: debug,
             });
         }
