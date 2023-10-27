@@ -2,7 +2,7 @@ use piston_window::{Key, types::Color, Context, G2d};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_EMPTY, SPACING, draw::{draw_rectangle, draw_big_block}, FIELD_SIZE, COLOR_YELLOW, COLOR_BLACK};
+use crate::{COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_EMPTY, SPACING, draw::{draw_rectangle, draw_big_block}, FIELD_SIZE, COLOR_YELLOW, COLOR_BLACK, COLOR_WHITE, COLOR_SECRET};
 
 const COLOR_CURRENT_POSITION: Color = [0.2, 0.2, 0.2, 0.5];
 const SIZE: i32 = 4;
@@ -16,6 +16,8 @@ pub enum Colors {
     Green,
     Yellow,
     Black,
+    White,
+    Secret,
 }
 
 impl Colors {
@@ -27,15 +29,17 @@ impl Colors {
             Colors::Green => COLOR_GREEN,
             Colors::Yellow => COLOR_YELLOW,
             Colors::Black => COLOR_BLACK,
+            Colors::White => COLOR_WHITE,
+            Colors::Secret => COLOR_SECRET,
         }
     }
-}
 
-impl Colors {
     pub fn create_color_list() -> Vec<Colors> {
         let mut color_options = vec![];
         for color in Colors::iter() {
-            color_options.push(color);
+            if color != Colors::Secret {
+                color_options.push(color);
+            }
         }
         return color_options;
     }
@@ -47,6 +51,7 @@ pub struct GuessInputField {
     ready: bool,
     send_guess: bool,
     current_position: usize,
+    disabled: bool,
 
     flashing_visible: bool,
     flash_timer: i32,
@@ -64,7 +69,7 @@ impl GuessInputField {
 
         let color_options = Colors::create_color_list();
 
-        return GuessInputField { fields, color_options, ready: false, send_guess: false, current_position: 0, flashing_visible: true, flash_timer: FLASH_TIMER, gui_position_x, gui_position_y};
+        return GuessInputField { fields, color_options, ready: false, send_guess: false, current_position: 0, disabled: false, flashing_visible: true, flash_timer: FLASH_TIMER, gui_position_x, gui_position_y};
     }
 
     pub fn get_send_guess(&self) -> bool {
@@ -79,20 +84,28 @@ impl GuessInputField {
         self.fields = vec![Colors::Empty; 4];
         self.ready = false;
         self.send_guess = false;
+        self.current_position = 0;
     }
 
+    pub fn disable_input(&mut self) {
+        self.disabled = true;
+    }
+
+    pub fn enable_input(&mut self) {
+        self.disabled = false;
+    }
 
     pub fn key_pressed(&mut self, key: Key) {
-        match key {
-            Key::Left => self.move_current_position(-1), // move current position left
-            Key::Right => self.move_current_position(1), // move current position right
-            Key::Up => self.change_color(1), // choose Color 
-            Key::Down => self.change_color(-1), // choose Color 
-            Key::H => todo!(), //print help message
-            Key::Return => self.send_guess(), // if on ready block set ready
-            _ => {},
+        if !self.disabled{
+            match key {
+                Key::Left => self.move_current_position(-1), // move current position left
+                Key::Right => self.move_current_position(1), // move current position right
+                Key::Up => self.change_color(1), // choose Color 
+                Key::Down => self.change_color(-1), // choose Color 
+                Key::Return => self.send_guess(), // if on ready block set ready
+                _ => {},
+            }
         }
-        // update the view here? or in game?
     }
 
     pub fn draw(&self, con: &Context, g: &mut G2d) {
@@ -138,7 +151,6 @@ impl GuessInputField {
     }
 
     fn move_current_position(&mut self, dir: i32) {
-        println!("Key_pressed");
         if dir == -1 && self.current_position > 0 {
             self.current_position -= 1
         } else if dir == 1 && self.current_position < 4 {
@@ -154,14 +166,12 @@ impl GuessInputField {
             return;
         }
         let mut index = self.color_options.iter().position(|color| color == &self.fields[self.current_position]).unwrap();
-        println!("{index} : {:?}", self.color_options[index]);
         if dir == -1 {
             index = (index + self.color_options.len() - 1) % self.color_options.len();
         } else {
             index = (index + self.color_options.len() + 1) % self.color_options.len();
         }
         self.fields[self.current_position] = self.color_options[index];
-        println!("{:?}", self.fields[self.current_position]);
     }
 
 }
