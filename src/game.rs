@@ -1,6 +1,9 @@
 use std::process;
 
-use crate::{guess, SPACING, draw::{draw_big_block, draw_block, draw_rectangle}, FIELD_SIZE, COLOR_GAMEOVER, COLOR_SUCCESS};
+use crate::{
+    draw::{draw_big_block, draw_block, draw_rectangle},
+    guess, COLOR_GAMEOVER, COLOR_SUCCESS, FIELD_SIZE, SPACING,
+};
 use guess::{Colors, GuessInputField};
 use piston_window::{Context, G2d, Key};
 use rand::{thread_rng, Rng};
@@ -45,7 +48,7 @@ impl GuessField {
 struct ValidationField {
     x: i32,
     y: i32,
-    pins: Vec<Colors>
+    pins: Vec<Colors>,
 }
 
 impl ValidationField {
@@ -74,13 +77,12 @@ impl ValidationField {
     }
 }
 
-
 pub struct Game {
     guess_input_field: GuessInputField,
 
     width: i32,
     height: i32,
-    
+
     number_of_guesses: usize,
     secret: Vec<SecretField>,
     guessed: Vec<Vec<GuessField>>,
@@ -91,20 +93,33 @@ pub struct Game {
     game_won: bool,
 
     waiting_time: f64,
-    
+
     debug: bool,
 }
 
 impl Game {
     pub fn new(width: i32, height: i32, number_of_guesses: usize, debug: bool) -> Game {
-
-        let (gui_position_x, gui_position_y) = Game::calculate_guess_input_position(width, height, number_of_guesses as i32);
+        let (gui_position_x, gui_position_y) =
+            Game::calculate_guess_input_position(width, height, number_of_guesses as i32);
         println!("{}", gui_position_y);
         let secret = Game::create_new_secret(debug);
         let guessed = Game::create_empty_guessed(number_of_guesses);
         let guess_validation = Game::create_empty_guess_validation(number_of_guesses);
 
-        Game { guess_input_field: GuessInputField::new(gui_position_x, gui_position_y), width, height, number_of_guesses, secret, guessed, guess_validation, guess_pointer: 0, game_over: false, game_won: false, waiting_time: 0.0, debug }
+        Game {
+            guess_input_field: GuessInputField::new(gui_position_x, gui_position_y),
+            width,
+            height,
+            number_of_guesses,
+            secret,
+            guessed,
+            guess_validation,
+            guess_pointer: 0,
+            game_over: false,
+            game_won: false,
+            waiting_time: 0.0,
+            debug,
+        }
     }
 
     pub fn update(&mut self, delta_time: f64) {
@@ -121,7 +136,7 @@ impl Game {
 
     pub fn key_pressed(&mut self, key: Key) {
         match key {
-            Key::H => todo!(), //print help message
+            Key::H => todo!(),        //print help message
             Key::R => self.restart(), // restart game
             key => self.guess_input_field.key_pressed(key),
         }
@@ -139,20 +154,20 @@ impl Game {
         for field in &self.secret {
             field.draw(con, g);
         }
-        
+
         for fields in &self.guessed {
             for field in fields {
                 field.draw(con, g);
             }
         }
-        
+
         for field in &self.guess_validation {
             field.draw(con, g);
         }
         self.guess_input_field.draw(con, g);
     }
 
-    fn restart(&mut self){
+    fn restart(&mut self) {
         //reset guess pointer
         self.guess_pointer = 0;
         // reset guessed
@@ -187,7 +202,12 @@ impl Game {
         self.waiting_time = 0.0;
     }
 
-    fn set_validation_pins_and_save_guess(&mut self, black_pins: i32, white_pins: i32, current_guess: &Vec<Colors>) {
+    fn set_validation_pins_and_save_guess(
+        &mut self,
+        black_pins: i32,
+        white_pins: i32,
+        current_guess: &Vec<Colors>,
+    ) {
         self.guess_validation[self.guess_pointer].set_pins(black_pins, white_pins);
 
         // add guess to guessed
@@ -224,14 +244,14 @@ impl Game {
             c = &self.secret[i].color;
             index = color_list.iter().position(|x| x == c).unwrap();
             color_occurences_secret[index] += 1;
-            
+
             c = &current_guess[i];
             index = color_list.iter().position(|x| x == c).unwrap();
             color_occurences_guess[index] += 1;
         }
 
         for i in 0..color_occurences_both.len() {
-            if color_occurences_guess[i] <=color_occurences_secret[i] {
+            if color_occurences_guess[i] <= color_occurences_secret[i] {
                 color_occurences_both[i] = color_occurences_guess[i];
             } else {
                 color_occurences_both[i] = color_occurences_secret[i];
@@ -243,7 +263,10 @@ impl Game {
         for i in 0..4 {
             if current_guess[i] == self.secret[i].color {
                 black_pins += 1;
-                index = color_list.iter().position(|x| x == &current_guess[i]).unwrap();
+                index = color_list
+                    .iter()
+                    .position(|x| x == &current_guess[i])
+                    .unwrap();
                 color_occurences_both[index] -= 1;
             }
         }
@@ -261,10 +284,26 @@ impl Game {
         let mut row = 1 + FIELD_SIZE + SPACING;
         for _ in 0..number_of_guesses {
             guessed.push(vec![
-                GuessField { x: 1, y: row, color: Colors::Empty },
-                GuessField { x: 1 + FIELD_SIZE + SPACING, y: row, color: Colors::Empty },
-                GuessField { x: 1 + 2 * FIELD_SIZE + 2 * SPACING, y: row, color: Colors::Empty },
-                GuessField { x: 1 + 3 * FIELD_SIZE + 3 * SPACING, y: row, color: Colors::Empty },
+                GuessField {
+                    x: 1,
+                    y: row,
+                    color: Colors::Empty,
+                },
+                GuessField {
+                    x: 1 + FIELD_SIZE + SPACING,
+                    y: row,
+                    color: Colors::Empty,
+                },
+                GuessField {
+                    x: 1 + 2 * FIELD_SIZE + 2 * SPACING,
+                    y: row,
+                    color: Colors::Empty,
+                },
+                GuessField {
+                    x: 1 + 3 * FIELD_SIZE + 3 * SPACING,
+                    y: row,
+                    color: Colors::Empty,
+                },
             ]);
             row = row + SPACING + FIELD_SIZE;
         }
@@ -276,7 +315,11 @@ impl Game {
         let mut row = 1 + FIELD_SIZE + SPACING;
         let column = 1 + 4 * FIELD_SIZE + 4 * SPACING;
         for _ in 0..number_of_guesses {
-            guess_validation.push(ValidationField { x: column, y: row, pins: vec![Colors::Empty; 4] });
+            guess_validation.push(ValidationField {
+                x: column,
+                y: row,
+                pins: vec![Colors::Empty; 4],
+            });
             row = row + SPACING + FIELD_SIZE;
         }
         return guess_validation;
@@ -289,19 +332,30 @@ impl Game {
         let mut rng = thread_rng();
         let mut secret = vec![];
         for i in 0..4 {
-            s = rng.gen_range(1..(color_options.len()-1));
-            secret.push(SecretField { x: 1 + i * FIELD_SIZE + i * SPACING, y: 1, color: color_options[s], show_color: debug });
+            s = rng.gen_range(1..(color_options.len() - 1));
+            secret.push(SecretField {
+                x: 1 + i * FIELD_SIZE + i * SPACING,
+                y: 1,
+                color: color_options[s],
+                show_color: debug,
+            });
         }
         return secret;
     }
 
-    fn calculate_guess_input_position(width: i32, height: i32, number_of_guesses: i32) -> (i32, i32) {
+    fn calculate_guess_input_position(
+        width: i32,
+        height: i32,
+        number_of_guesses: i32,
+    ) -> (i32, i32) {
         // 2 blocks for sides, for each guess field 2 blocks, for guess validation field 2 blocks = 12 + 4 * Spacing
         let min_width = 12 + 4 * SPACING;
         // 2 sides, secret, guesses, inputfield
         let min_height = 2 + 2 + 2 * number_of_guesses + number_of_guesses * SPACING + SPACING + 2;
         if min_width > width || min_height > height {
-            println!("Game configuration too small, min_width: {min_width}, min_height: {min_height}");
+            println!(
+                "Game configuration too small, min_width: {min_width}, min_height: {min_height}"
+            );
             process::exit(0);
         }
         let x = 1;
@@ -309,4 +363,3 @@ impl Game {
         return (x, y);
     }
 }
-

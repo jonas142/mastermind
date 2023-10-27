@@ -1,8 +1,12 @@
-use piston_window::{Key, types::Color, Context, G2d};
+use piston_window::{types::Color, Context, G2d, Key};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_EMPTY, SPACING, draw::{draw_rectangle, draw_big_block}, FIELD_SIZE, COLOR_YELLOW, COLOR_BLACK, COLOR_WHITE, COLOR_SECRET};
+use crate::{
+    draw::{draw_big_block, draw_rectangle},
+    COLOR_BLACK, COLOR_BLUE, COLOR_EMPTY, COLOR_GREEN, COLOR_RED, COLOR_SECRET, COLOR_WHITE,
+    COLOR_YELLOW, FIELD_SIZE, SPACING,
+};
 
 const COLOR_CURRENT_POSITION: Color = [0.2, 0.2, 0.2, 0.5];
 const SIZE: i32 = 4;
@@ -69,7 +73,18 @@ impl GuessInputField {
 
         let color_options = Colors::create_color_list();
 
-        return GuessInputField { fields, color_options, ready: false, send_guess: false, current_position: 0, disabled: false, flashing_visible: true, flash_timer: FLASH_TIMER, gui_position_x, gui_position_y};
+        return GuessInputField {
+            fields,
+            color_options,
+            ready: false,
+            send_guess: false,
+            current_position: 0,
+            disabled: false,
+            flashing_visible: true,
+            flash_timer: FLASH_TIMER,
+            gui_position_x,
+            gui_position_y,
+        };
     }
 
     pub fn get_send_guess(&self) -> bool {
@@ -96,14 +111,14 @@ impl GuessInputField {
     }
 
     pub fn key_pressed(&mut self, key: Key) {
-        if !self.disabled{
+        if !self.disabled {
             match key {
                 Key::Left => self.move_current_position(-1), // move current position left
                 Key::Right => self.move_current_position(1), // move current position right
-                Key::Up => self.change_color(1), // choose Color 
-                Key::Down => self.change_color(-1), // choose Color 
-                Key::Return => self.send_guess(), // if on ready block set ready
-                _ => {},
+                Key::Up => self.change_color(1),             // choose Color
+                Key::Down => self.change_color(-1),          // choose Color
+                Key::Return => self.send_guess(),            // if on ready block set ready
+                _ => {}
             }
         }
     }
@@ -111,7 +126,13 @@ impl GuessInputField {
     pub fn draw(&self, con: &Context, g: &mut G2d) {
         let mut i = 0;
         for block in &self.fields {
-            draw_big_block(block.return_color(), self.gui_position_x + i * SPACING + i * FIELD_SIZE, self.gui_position_y, con, g);
+            draw_big_block(
+                block.return_color(),
+                self.gui_position_x + i * SPACING + i * FIELD_SIZE,
+                self.gui_position_y,
+                con,
+                g,
+            );
             i += 1;
         }
         // draw enterBlock
@@ -119,13 +140,37 @@ impl GuessInputField {
             true => COLOR_GREEN,
             false => COLOR_RED,
         };
-        draw_rectangle(color, self.gui_position_x + i * SPACING + i * FIELD_SIZE, self.gui_position_y - 1, 2, 3, con, g);
+        draw_rectangle(
+            color,
+            self.gui_position_x + i * SPACING + i * FIELD_SIZE,
+            self.gui_position_y - 1,
+            2,
+            3,
+            con,
+            g,
+        );
         // draw current position
         if self.flashing_visible {
             if self.current_position == 4 {
-                draw_rectangle(COLOR_CURRENT_POSITION, self.gui_position_x + i * SPACING + i * FIELD_SIZE, self.gui_position_y - 1, 2, 3, con, g);
+                draw_rectangle(
+                    COLOR_CURRENT_POSITION,
+                    self.gui_position_x + i * SPACING + i * FIELD_SIZE,
+                    self.gui_position_y - 1,
+                    2,
+                    3,
+                    con,
+                    g,
+                );
             } else {
-                draw_big_block(COLOR_CURRENT_POSITION, self.gui_position_x + (self.current_position as i32) * SPACING + (self.current_position as i32) * FIELD_SIZE, self.gui_position_y, con, g);
+                draw_big_block(
+                    COLOR_CURRENT_POSITION,
+                    self.gui_position_x
+                        + (self.current_position as i32) * SPACING
+                        + (self.current_position as i32) * FIELD_SIZE,
+                    self.gui_position_y,
+                    con,
+                    g,
+                );
             }
         }
     }
@@ -137,7 +182,7 @@ impl GuessInputField {
             self.ready = false;
         }
         // allow to flash
-        if self.flash_timer <=0 {
+        if self.flash_timer <= 0 {
             self.flashing_visible = !self.flashing_visible;
             self.flash_timer = FLASH_TIMER;
         }
@@ -165,7 +210,11 @@ impl GuessInputField {
         if self.current_position == 4 {
             return;
         }
-        let mut index = self.color_options.iter().position(|color| color == &self.fields[self.current_position]).unwrap();
+        let mut index = self
+            .color_options
+            .iter()
+            .position(|color| color == &self.fields[self.current_position])
+            .unwrap();
         if dir == -1 {
             index = (index + self.color_options.len() - 1) % self.color_options.len();
         } else {
@@ -173,5 +222,4 @@ impl GuessInputField {
         }
         self.fields[self.current_position] = self.color_options[index];
     }
-
 }

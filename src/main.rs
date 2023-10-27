@@ -3,15 +3,17 @@ extern crate rand;
 
 use std::env;
 
-use piston_window::{types::Color, PistonWindow, WindowSettings, Button, PressEvent, clear, UpdateEvent};
+use piston_window::{
+    clear, types::Color, Button, PistonWindow, PressEvent, UpdateEvent, WindowSettings,
+};
 
 use crate::game::Game;
 
 use draw::to_coord_u32;
 
 mod draw;
-mod guess;
 mod game;
+mod guess;
 
 pub const COLOR_RED: Color = [0.8, 0.0, 0.0, 1.0];
 pub const COLOR_GREEN: Color = [0.0, 0.8, 0.0, 1.0];
@@ -38,12 +40,12 @@ fn main() {
         }
     }
 
-
-
     let (width, height) = (24, 39);
-    let mut window: PistonWindow = WindowSettings::new("Mastermind", [to_coord_u32(width), to_coord_u32(height)]).exit_on_esc(true)
-    .build()
-    .unwrap();
+    let mut window: PistonWindow =
+        WindowSettings::new("Mastermind", [to_coord_u32(width), to_coord_u32(height)])
+            .exit_on_esc(true)
+            .build()
+            .unwrap();
 
     let mut game = Game::new(width, height, 6, debug);
     while let Some(event) = window.next() {
