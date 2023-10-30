@@ -3,8 +3,14 @@ extern crate rand;
 
 use std::env;
 
+use help_page::draw_help_page;
 use piston_window::{
-    clear, types::Color, Button, PistonWindow, PressEvent, UpdateEvent, WindowSettings,
+    clear,
+    glyph_cache::{self, rusttype::GlyphCache},
+    text,
+    types::Color,
+    Button, Context, EventLoop, G2d, G2dTexture, GfxFactory, Glyphs, PistonWindow, PressEvent,
+    TextureSettings, Transformed, UpdateEvent, WindowSettings,
 };
 
 use crate::game::Game;
@@ -14,6 +20,7 @@ use draw::to_coord_u32;
 mod draw;
 mod game;
 mod guess;
+mod help_page;
 
 pub const COLOR_RED: Color = [0.8, 0.0, 0.0, 1.0];
 pub const COLOR_GREEN: Color = [0.0, 0.8, 0.0, 1.0];
@@ -47,19 +54,43 @@ fn main() {
             .build()
             .unwrap();
 
+    let assets = find_folder::Search::ParentsThenKids(3, 3)
+        .for_folder("assets")
+        .unwrap();
+    let mut glyphs = window
+        .load_font(assets.join("FiraSans-Regular.ttf"))
+        .unwrap();
+    window.set_lazy(true);
+
     let mut game = Game::new(width, height, 6, debug);
     while let Some(event) = window.next() {
-        if let Some(Button::Keyboard(key)) = event.press_args() {
-            game.key_pressed(key);
-        }
+        // if let Some(Button::Keyboard(key)) = event.press_args() {
+        //     game.key_pressed(key);
+        // }
 
-        window.draw_2d(&event, |c, g, _| {
-            clear(BACK_COLOR, g);
-            game.draw(&c, g);
-        });
+        // window.draw_2d(&event, |c, g, _| {
+        //     clear(BACK_COLOR, g);
+        //     game.draw(&c, g);
+        //     draw_help_page(&c, g, COLOR_BLACK, 0, 0, &mut glyphs);
+        // });
 
-        event.update(|args| {
-            game.update(args.dt);
+        // event.update(|args| {
+        //     game.update(args.dt);
+        // });
+        window.draw_2d(&event, |c, g, device| {
+            clear([1.0, 1.0, 1.0, 1.0], g);
+            draw_help_page(
+                10.0,
+                100.0,
+                "Hello world!",
+                32,
+                COLOR_BLACK,
+                &c,
+                g,
+                &mut glyphs,
+            );
+            // Update glyphs before rendering.
+            glyphs.factory.encoder.flush(device);
         });
     }
 }
