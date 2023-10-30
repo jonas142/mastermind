@@ -2,10 +2,12 @@ use std::process;
 
 use crate::{
     draw::{draw_big_block, draw_block, draw_rectangle},
-    guess, COLOR_GAMEOVER, COLOR_SUCCESS, FIELD_SIZE, SPACING,
+    guess,
+    help_page::draw_help_page,
+    COLOR_BLACK, COLOR_GAMEOVER, COLOR_SUCCESS, FIELD_SIZE, SPACING,
 };
 use guess::{Colors, GuessInputField};
-use piston_window::{Context, G2d, Key};
+use piston_window::{Context, G2d, Glyphs, Key};
 use rand::{thread_rng, Rng};
 
 const MOVING_PERIOD: f64 = 0.1;
@@ -92,6 +94,8 @@ pub struct Game {
     game_over: bool,
     game_won: bool,
 
+    show_help: bool,
+
     waiting_time: f64,
 
     debug: bool,
@@ -117,6 +121,7 @@ impl Game {
             guess_pointer: 0,
             game_over: false,
             game_won: false,
+            show_help: false,
             waiting_time: 0.0,
             debug,
         }
@@ -136,19 +141,33 @@ impl Game {
 
     pub fn key_pressed(&mut self, key: Key) {
         match key {
-            Key::H => todo!(),        //print help message
-            Key::R => self.restart(), // restart game
+            Key::H => self.enable_help(), //print help message
+            Key::R => self.restart(),     // restart game
             key => self.guess_input_field.key_pressed(key),
         }
     }
 
-    pub fn draw(&self, con: &Context, g: &mut G2d) {
+    pub fn draw(&mut self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
         if self.game_won {
             draw_rectangle(COLOR_SUCCESS, 0, 0, self.width, self.height, con, g);
         }
 
         if self.game_over {
             draw_rectangle(COLOR_GAMEOVER, 0, 0, self.width, self.height, con, g);
+        }
+
+        if self.show_help {
+            draw_help_page(
+                10.0,
+                100.0,
+                "Hello world!",
+                32,
+                COLOR_BLACK,
+                &con,
+                g,
+                glyphs,
+            );
+            return;
         }
 
         for field in &self.secret {
@@ -165,6 +184,10 @@ impl Game {
             field.draw(con, g);
         }
         self.guess_input_field.draw(con, g);
+    }
+
+    fn enable_help(&mut self) {
+        self.show_help = true;
     }
 
     fn restart(&mut self) {

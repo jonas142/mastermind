@@ -64,33 +64,28 @@ fn main() {
 
     let mut game = Game::new(width, height, 6, debug);
     while let Some(event) = window.next() {
-        // if let Some(Button::Keyboard(key)) = event.press_args() {
-        //     game.key_pressed(key);
-        // }
+        if let Some(Button::Keyboard(key)) = event.press_args() {
+            game.key_pressed(key);
+        }
 
-        // window.draw_2d(&event, |c, g, _| {
-        //     clear(BACK_COLOR, g);
-        //     game.draw(&c, g);
-        //     draw_help_page(&c, g, COLOR_BLACK, 0, 0, &mut glyphs);
-        // });
-
-        // event.update(|args| {
-        //     game.update(args.dt);
-        // });
         window.draw_2d(&event, |c, g, device| {
-            clear([1.0, 1.0, 1.0, 1.0], g);
-            draw_help_page(
-                10.0,
-                100.0,
-                "Hello world!",
-                32,
-                COLOR_BLACK,
-                &c,
-                g,
-                &mut glyphs,
-            );
-            // Update glyphs before rendering.
+            clear(BACK_COLOR, g);
+            game.draw(&c, g, &mut glyphs);
+            // draw_help_page(
+            //     10.0,
+            //     100.0,
+            //     "Hello world!",
+            //     32,
+            //     COLOR_BLACK,
+            //     &c,
+            //     g,
+            //     &mut glyphs,
+            // );
             glyphs.factory.encoder.flush(device);
+        });
+
+        event.update(|args| {
+            game.update(args.dt);
         });
     }
 }
