@@ -4,7 +4,7 @@ extern crate rand;
 use std::env;
 
 use piston_window::{
-    clear, types::Color, Button, EventLoop, PistonWindow, PressEvent, UpdateEvent, WindowSettings,
+    clear, types::Color, Button, PistonWindow, PressEvent, UpdateEvent, WindowSettings,
 };
 
 use crate::game::Game;
@@ -14,7 +14,7 @@ use draw::to_coord_u32;
 mod draw;
 mod game;
 mod guess;
-mod help_page;
+mod page_renderer;
 
 pub const COLOR_RED: Color = [0.8, 0.0, 0.0, 1.0];
 pub const COLOR_GREEN: Color = [0.0, 0.8, 0.0, 1.0];

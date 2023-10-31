@@ -1,5 +1,9 @@
 use piston_window::{text, types::Color, Context, G2d, Glyphs, Key, Transformed};
 
+use crate::COLOR_BLACK;
+
+const START_PAGE: &str = "Hello World!";
+
 const HELP_MESSAGE: &str = "                        Help Menu
 \r\n    For a general explanation of the
 \r\n    game Press \'G\'
@@ -16,13 +20,29 @@ const HELP_MESSAGE: &str = "                        Help Menu
 \r\n    to it and press \'Enter\'
 \r\n
 \r\n
-\r\n    Press \'Enter\' to return to the game";
+\r\n
+\r\n
+\r\n    Press \'Enter\' to return";
 
-const GENERAL_INFO: &str = "                        General Explanation
-\r\n    The goal of the game is to find the color combination of the secret.
-\r\n    By submitting a color combination you guess.
-\r\n    Your guess is validated by the computer, a black pin in the validation field next to the guessed input shows this validation. A black pin means a color is correct and in the correct position. A white pin means a color is correct but in the wrong positions. Use these hints to discover the correct color combination!
-\r\n    Have Fun!";
+const GENERAL_INFO: &str = "                      General Explanation
+\r\n    The goal of the game is to find the
+\r\n    color combination of the secret.
+\r\n    By submitting a color combination,
+\r\n    you guess.
+\r\n    Your guess is validated by the
+\r\n    computer, a black pin in the 
+\r\n    validation field next to the guessed 
+\r\n    input shows this validation. A black
+\r\n    pin means a color is correct and 
+\r\n    in the correct position. A white
+\r\n    pin means a color is correct but in 
+\r\n    the wrong positions. Use these hints
+\r\n    to discover the correct color 
+\r\n    combination!
+\r\n
+\r\n    Have Fun!
+\r\n
+\r\n    Press \'Enter\' to return";
 
 pub struct PageRenderer {
     size: u32,
@@ -38,6 +58,10 @@ impl PageRenderer {
             y,
             current_depth: 0,
         };
+    }
+
+    pub fn draw_start_page(&self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
+        self.draw_page(START_PAGE, COLOR_BLACK, con, g, glyphs);
     }
 
     pub fn draw(&self, color: Color, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {

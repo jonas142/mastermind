@@ -2,11 +2,10 @@ use std::process;
 
 use crate::{
     draw::{draw_big_block, draw_block, draw_rectangle},
-    guess,
-    help_page::PageRenderer,
-    COLOR_BLACK, COLOR_GAMEOVER, COLOR_SUCCESS, FIELD_SIZE, SPACING,
+    guess, page_renderer, COLOR_BLACK, COLOR_GAMEOVER, COLOR_SUCCESS, FIELD_SIZE, SPACING,
 };
 use guess::{Colors, GuessInputField};
+use page_renderer::PageRenderer;
 use piston_window::{Context, G2d, Glyphs, Key};
 use rand::{thread_rng, Rng};
 
@@ -93,6 +92,7 @@ pub struct Game {
 
     game_over: bool,
     game_won: bool,
+    game_running: bool,
 
     page_renderer: PageRenderer,
 
@@ -123,6 +123,7 @@ impl Game {
             guess_pointer: 0,
             game_over: false,
             game_won: false,
+            game_running: false,
             page_renderer,
             waiting_time: 0.0,
             debug,
@@ -154,6 +155,14 @@ impl Game {
     }
 
     pub fn draw(&mut self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
+        if self.game_running {
+            self.draw_game(con, g, glyphs);
+        } else {
+            self.page_renderer.draw_start_page(&con, g, glyphs);
+        }
+    }
+
+    fn draw_game(&mut self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
         if self.game_won {
             draw_rectangle(COLOR_SUCCESS, 0, 0, self.width, self.height, con, g);
         }
