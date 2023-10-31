@@ -3,7 +3,7 @@ use std::process;
 use crate::{
     draw::{draw_big_block, draw_block, draw_rectangle},
     guess,
-    help_page::draw_help_page,
+    help_page::PageRenderer,
     COLOR_BLACK, COLOR_GAMEOVER, COLOR_SUCCESS, FIELD_SIZE, SPACING,
 };
 use guess::{Colors, GuessInputField};
@@ -94,7 +94,7 @@ pub struct Game {
     game_over: bool,
     game_won: bool,
 
-    show_help: bool,
+    page_renderer: PageRenderer,
 
     waiting_time: f64,
 
@@ -110,6 +110,8 @@ impl Game {
         let guessed = Game::create_empty_guessed(number_of_guesses);
         let guess_validation = Game::create_empty_guess_validation(number_of_guesses);
 
+        let page_renderer = PageRenderer::new(20, 0.0, 20.0);
+
         Game {
             guess_input_field: GuessInputField::new(gui_position_x, gui_position_y),
             width,
@@ -121,7 +123,7 @@ impl Game {
             guess_pointer: 0,
             game_over: false,
             game_won: false,
-            show_help: false,
+            page_renderer,
             waiting_time: 0.0,
             debug,
         }
@@ -140,10 +142,14 @@ impl Game {
     }
 
     pub fn key_pressed(&mut self, key: Key) {
-        match key {
-            Key::H => self.enable_help(), //print help message
-            Key::R => self.restart(),     // restart game
-            key => self.guess_input_field.key_pressed(key),
+        if self.page_renderer.is_open() {
+            self.page_renderer.key_pressed(key);
+        } else {
+            match key {
+                Key::H => self.enable_help(), //print help message
+                Key::R => self.restart(),     // restart game
+                key => self.guess_input_field.key_pressed(key),
+            }
         }
     }
 
@@ -156,17 +162,8 @@ impl Game {
             draw_rectangle(COLOR_GAMEOVER, 0, 0, self.width, self.height, con, g);
         }
 
-        if self.show_help {
-            draw_help_page(
-                10.0,
-                100.0,
-                "Hello world!",
-                32,
-                COLOR_BLACK,
-                &con,
-                g,
-                glyphs,
-            );
+        if self.page_renderer.is_open() {
+            self.page_renderer.draw(COLOR_BLACK, &con, g, glyphs);
             return;
         }
 
@@ -187,7 +184,7 @@ impl Game {
     }
 
     fn enable_help(&mut self) {
-        self.show_help = true;
+        self.page_renderer.open_help()
     }
 
     fn restart(&mut self) {

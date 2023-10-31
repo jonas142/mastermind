@@ -118,7 +118,7 @@ impl GuessInputField {
                 Key::Up => self.change_color(1),             // choose Color
                 Key::Down => self.change_color(-1),          // choose Color
                 Key::Return => self.send_guess(),            // if on ready block set ready
-                _ => {}
+                _ => (),
             }
         }
     }

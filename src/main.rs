@@ -3,14 +3,8 @@ extern crate rand;
 
 use std::env;
 
-use help_page::draw_help_page;
 use piston_window::{
-    clear,
-    glyph_cache::{self, rusttype::GlyphCache},
-    text,
-    types::Color,
-    Button, Context, EventLoop, G2d, G2dTexture, GfxFactory, Glyphs, PistonWindow, PressEvent,
-    TextureSettings, Transformed, UpdateEvent, WindowSettings,
+    clear, types::Color, Button, EventLoop, PistonWindow, PressEvent, UpdateEvent, WindowSettings,
 };
 
 use crate::game::Game;
@@ -60,7 +54,7 @@ fn main() {
     let mut glyphs = window
         .load_font(assets.join("FiraSans-Regular.ttf"))
         .unwrap();
-    window.set_lazy(true);
+    // window.set_lazy(true);
 
     let mut game = Game::new(width, height, 6, debug);
     while let Some(event) = window.next() {
