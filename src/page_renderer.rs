@@ -1,8 +1,12 @@
 use piston_window::{text, types::Color, Context, G2d, Glyphs, Key, Transformed};
 
-use crate::{game::GameState, COLOR_BLACK};
+use crate::COLOR_BLACK;
 
 const START_PAGE: &str = "Hello World!";
+
+const GAMEOVER_PAGE: &str = "Hello World!";
+
+const GAMEWON_PAGE: &str = "Hello World!";
 
 const HELP_MESSAGE: &str = "                        Help Menu
 \r\n    For a general explanation of the
@@ -44,13 +48,24 @@ const GENERAL_INFO: &str = "                      General Explanation
 \r\n
 \r\n    Press \'Enter\' to return";
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum MenuState {
+    Start,
+    PausedHelp,
+    PausedGeneral,
+    GameWon,
+    GameOver,
+}
+
 pub struct PageRenderer {
     size: u32,
     x: f64,
     y: f64,
     open: bool,
-    current_depth: i32,
+    menu_state: MenuState,
+    last_significant_state: MenuState,
 }
+
 impl PageRenderer {
     pub fn new(size: u32, x: f64, y: f64, open: bool) -> PageRenderer {
         return PageRenderer {
@@ -58,53 +73,66 @@ impl PageRenderer {
             x,
             y,
             open,
-            current_depth: 0,
+            menu_state: MenuState::Start,
+            last_significant_state: MenuState::Start,
         };
     }
 
-    pub fn draw_game_state_page(
-        &self,
-        game_state: GameState,
-        con: &Context,
-        g: &mut G2d,
-        glyphs: &mut Glyphs,
-    ) {
-        match game_state {
-            GameState::Start => self.draw_page(START_PAGE, COLOR_BLACK, con, g, glyphs),
-            GameState::Running => todo!(),
-            GameState::Paused => self.draw(COLOR_BLACK, con, g, glyphs),
-            GameState::GameOver => todo!(),
-            GameState::GameWon => todo!(),
+    pub fn draw_game_state_page(&self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
+        match self.menu_state {
+            MenuState::Start => self.draw_page(START_PAGE, COLOR_BLACK, con, g, glyphs),
+            MenuState::PausedHelp => self.draw_page(HELP_MESSAGE, COLOR_BLACK, con, g, glyphs),
+            MenuState::PausedGeneral => self.draw_page(GENERAL_INFO, COLOR_BLACK, con, g, glyphs),
+            MenuState::GameOver => self.draw_page(GAMEOVER_PAGE, COLOR_BLACK, con, g, glyphs),
+            MenuState::GameWon => self.draw_page(GAMEWON_PAGE, COLOR_BLACK, con, g, glyphs),
         }
     }
 
-    fn draw(&self, color: Color, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
-        match self.current_depth {
-            1 => self.draw_page(HELP_MESSAGE, color, con, g, glyphs),
-            2 => self.draw_page(GENERAL_INFO, color, con, g, glyphs),
-            _ => (),
-        }
-    }
-
-    pub fn key_pressed(&mut self, key: Key) {
+    pub fn key_pressed(&mut self, key: Key) -> bool {
         /* Returns if it should still show the rendered page */
         match key {
-            Key::Return => self.current_depth -= 1,
-            Key::G => self.current_depth = 2,
+            Key::S
+                if {
+                    self.menu_state == MenuState::GameOver
+                        || self.menu_state == MenuState::GameWon
+                        || self.menu_state == MenuState::Start
+                } =>
+            {
+                self.open = false;
+                return self.menu_state == MenuState::GameOver
+                    || self.menu_state == MenuState::GameWon;
+            }
+            Key::Return => self.return_or_close(),
+            Key::H if { self.menu_state != MenuState::PausedGeneral } => {
+                self.menu_state = MenuState::PausedHelp
+            }
+            Key::G if { self.menu_state == MenuState::PausedHelp } => {
+                self.menu_state = MenuState::PausedGeneral
+            }
             _ => (),
         }
-        if self.current_depth < 0 {
-            self.open = false;
-        }
+        return false;
     }
 
     pub fn is_open(&self) -> bool {
         return self.open;
     }
 
-    pub fn open_help(&mut self) {
-        self.current_depth = 1;
+    pub fn open(&mut self, state: MenuState) {
         self.open = true;
+        self.menu_state = state;
+        self.last_significant_state = state;
+    }
+
+    fn return_or_close(&mut self) {
+        match &self.menu_state {
+            MenuState::PausedGeneral => self.menu_state = MenuState::PausedHelp,
+            MenuState::PausedHelp if { &MenuState::PausedHelp == &self.last_significant_state } => {
+                self.open = false
+            }
+            MenuState::PausedHelp => self.menu_state = self.last_significant_state,
+            _ => (),
+        }
     }
 
     fn draw_page(&self, text: &str, color: Color, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {

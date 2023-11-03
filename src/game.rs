@@ -1,8 +1,10 @@
 use std::process;
 
 use crate::{
-    draw::{draw_big_block, draw_block, draw_rectangle},
-    guess, page_renderer, COLOR_BLACK, COLOR_GAMEOVER, COLOR_SUCCESS, FIELD_SIZE, SPACING,
+    draw::{draw_big_block, draw_block},
+    guess,
+    page_renderer::{self, MenuState},
+    FIELD_SIZE, SPACING,
 };
 use guess::{Colors, GuessInputField};
 use page_renderer::PageRenderer;
@@ -13,11 +15,8 @@ const MOVING_PERIOD: f64 = 0.1;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum GameState {
-    Start,
     Running,
     Paused,
-    GameOver,
-    GameWon,
 }
 
 #[derive(Clone, Copy)]
@@ -90,9 +89,6 @@ impl ValidationField {
 pub struct Game {
     guess_input_field: GuessInputField,
 
-    width: i32,
-    height: i32,
-
     number_of_guesses: usize,
     secret: Vec<SecretField>,
     guessed: Vec<Vec<GuessField>>,
@@ -117,18 +113,16 @@ impl Game {
         let guessed = Game::create_empty_guessed(number_of_guesses);
         let guess_validation = Game::create_empty_guess_validation(number_of_guesses);
 
-        let page_renderer = PageRenderer::new(20, 0.0, 20.0, false);
+        let page_renderer = PageRenderer::new(20, 0.0, 20.0, true);
 
         Game {
             guess_input_field: GuessInputField::new(gui_position_x, gui_position_y),
-            width,
-            height,
             number_of_guesses,
             secret,
             guessed,
             guess_validation,
             guess_pointer: 0,
-            game_state: GameState::Running,
+            game_state: GameState::Paused,
             page_renderer,
             waiting_time: 0.0,
             debug,
@@ -138,7 +132,7 @@ impl Game {
     pub fn update(&mut self, delta_time: f64) {
         self.waiting_time += delta_time;
 
-        if self.game_state != GameState::Running {
+        if self.game_state == GameState::Paused {
             if self.page_renderer.is_open() {
                 return;
             } else {
@@ -152,8 +146,11 @@ impl Game {
     }
 
     pub fn key_pressed(&mut self, key: Key) {
-        if self.page_renderer.is_open() || self.game_state != GameState::Running {
-            self.page_renderer.key_pressed(key);
+        if self.page_renderer.is_open() || self.game_state == GameState::Paused {
+            let restart = self.page_renderer.key_pressed(key);
+            if restart {
+                self.restart()
+            }
         } else {
             match key {
                 Key::H => self.enable_help(), //print help message
@@ -164,22 +161,8 @@ impl Game {
     }
 
     pub fn draw(&mut self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
-        if self.game_state == GameState::Start {
-            self.page_renderer
-                .draw_game_state_page(self.game_state, con, g, glyphs)
-        }
-
-        if self.game_state == GameState::GameWon {
-            draw_rectangle(COLOR_SUCCESS, 0, 0, self.width, self.height, con, g);
-        }
-
-        if self.game_state == GameState::GameOver {
-            draw_rectangle(COLOR_GAMEOVER, 0, 0, self.width, self.height, con, g);
-        }
-
         if self.game_state == GameState::Paused {
-            self.page_renderer
-                .draw_game_state_page(self.game_state, &con, g, glyphs);
+            self.page_renderer.draw_game_state_page(&con, g, glyphs);
             return;
         }
 
@@ -201,7 +184,7 @@ impl Game {
 
     fn enable_help(&mut self) {
         self.game_state = GameState::Paused;
-        self.page_renderer.open_help();
+        self.page_renderer.open(MenuState::PausedHelp);
     }
 
     fn restart(&mut self) {
@@ -214,7 +197,7 @@ impl Game {
         // create new secret
         self.secret = Game::create_new_secret(self.debug);
         // reset gameover / success
-        self.game_state = GameState::Start;
+        self.game_state = GameState::Paused;
         // reset guess input field
         self.guess_input_field.reset_guess();
         // enable input field
@@ -253,10 +236,12 @@ impl Game {
         self.guess_pointer += 1;
         // check success or game over
         if black_pins == 4 {
-            self.game_state = GameState::GameWon;
+            self.game_state = GameState::Paused;
+            self.page_renderer.open(MenuState::GameWon);
             self.handle_game_end();
         } else if self.guess_pointer == self.number_of_guesses {
-            self.game_state = GameState::GameOver;
+            self.game_state = GameState::Paused;
+            self.page_renderer.open(MenuState::GameOver);
             self.handle_game_end();
         }
     }
@@ -270,27 +255,27 @@ impl Game {
 
     fn check_guess_against_secret(&mut self, current_guess: &Vec<Colors>) -> (i32, i32) {
         let color_list = Colors::create_color_list();
-        let mut color_occurences_secret = vec![0; color_list.len()];
-        let mut color_occurences_guess = vec![0; color_list.len()];
-        let mut color_occurences_both = vec![0; color_list.len()];
+        let mut color_occurrences_secret = vec![0; color_list.len()];
+        let mut color_occurrences_guess = vec![0; color_list.len()];
+        let mut color_occurrences_both = vec![0; color_list.len()];
         let mut c;
         let mut index;
 
         for i in 0..4 {
             c = &self.secret[i].color;
             index = color_list.iter().position(|x| x == c).unwrap();
-            color_occurences_secret[index] += 1;
+            color_occurrences_secret[index] += 1;
 
             c = &current_guess[i];
             index = color_list.iter().position(|x| x == c).unwrap();
-            color_occurences_guess[index] += 1;
+            color_occurrences_guess[index] += 1;
         }
 
-        for i in 0..color_occurences_both.len() {
-            if color_occurences_guess[i] <= color_occurences_secret[i] {
-                color_occurences_both[i] = color_occurences_guess[i];
+        for i in 0..color_occurrences_both.len() {
+            if color_occurrences_guess[i] <= color_occurrences_secret[i] {
+                color_occurrences_both[i] = color_occurrences_guess[i];
             } else {
-                color_occurences_both[i] = color_occurences_secret[i];
+                color_occurrences_both[i] = color_occurrences_secret[i];
             }
         }
 
@@ -303,10 +288,10 @@ impl Game {
                     .iter()
                     .position(|x| x == &current_guess[i])
                     .unwrap();
-                color_occurences_both[index] -= 1;
+                color_occurrences_both[index] -= 1;
             }
         }
-        let white_pins: i32 = color_occurences_both.iter().sum();
+        let white_pins: i32 = color_occurrences_both.iter().sum();
 
         (black_pins, white_pins)
     }
@@ -383,7 +368,7 @@ impl Game {
     ) -> (i32, i32) {
         // 2 blocks for sides, for each guess field 2 blocks, for guess validation field 2 blocks = 12 + 4 * Spacing
         let min_width = 12 + 4 * SPACING;
-        // 2 sides, secret, guesses, inputfield
+        // 2 sides, secret, guesses, input field
         let min_height = 2 + 2 + 2 * number_of_guesses + number_of_guesses * SPACING + SPACING + 2;
         if min_width > width || min_height > height {
             println!(

@@ -7,6 +7,7 @@ fn to_coord(game_coord: i32) -> f64 {
 }
 
 pub fn to_coord_u32(game_coord: i32) -> u32 {
+    println!("{game_coord}");
     to_coord(game_coord) as u32
 }
 
