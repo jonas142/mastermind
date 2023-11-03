@@ -11,6 +11,15 @@ use rand::{thread_rng, Rng};
 
 const MOVING_PERIOD: f64 = 0.1;
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum GameState {
+    Start,
+    Running,
+    Paused,
+    GameOver,
+    GameWon,
+}
+
 #[derive(Clone, Copy)]
 struct SecretField {
     x: i32,
@@ -90,9 +99,7 @@ pub struct Game {
     guess_validation: Vec<ValidationField>,
     guess_pointer: usize,
 
-    game_over: bool,
-    game_won: bool,
-    game_running: bool,
+    game_state: GameState,
 
     page_renderer: PageRenderer,
 
@@ -110,7 +117,7 @@ impl Game {
         let guessed = Game::create_empty_guessed(number_of_guesses);
         let guess_validation = Game::create_empty_guess_validation(number_of_guesses);
 
-        let page_renderer = PageRenderer::new(20, 0.0, 20.0);
+        let page_renderer = PageRenderer::new(20, 0.0, 20.0, false);
 
         Game {
             guess_input_field: GuessInputField::new(gui_position_x, gui_position_y),
@@ -121,9 +128,7 @@ impl Game {
             guessed,
             guess_validation,
             guess_pointer: 0,
-            game_over: false,
-            game_won: false,
-            game_running: false,
+            game_state: GameState::Running,
             page_renderer,
             waiting_time: 0.0,
             debug,
@@ -133,8 +138,12 @@ impl Game {
     pub fn update(&mut self, delta_time: f64) {
         self.waiting_time += delta_time;
 
-        if self.game_over {
-            return;
+        if self.game_state != GameState::Running {
+            if self.page_renderer.is_open() {
+                return;
+            } else {
+                self.game_state = GameState::Running;
+            }
         }
 
         if self.waiting_time > MOVING_PERIOD {
@@ -143,7 +152,7 @@ impl Game {
     }
 
     pub fn key_pressed(&mut self, key: Key) {
-        if self.page_renderer.is_open() {
+        if self.page_renderer.is_open() || self.game_state != GameState::Running {
             self.page_renderer.key_pressed(key);
         } else {
             match key {
@@ -155,24 +164,22 @@ impl Game {
     }
 
     pub fn draw(&mut self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
-        if self.game_running {
-            self.draw_game(con, g, glyphs);
-        } else {
-            self.page_renderer.draw_start_page(&con, g, glyphs);
+        if self.game_state == GameState::Start {
+            self.page_renderer
+                .draw_game_state_page(self.game_state, con, g, glyphs)
         }
-    }
 
-    fn draw_game(&mut self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
-        if self.game_won {
+        if self.game_state == GameState::GameWon {
             draw_rectangle(COLOR_SUCCESS, 0, 0, self.width, self.height, con, g);
         }
 
-        if self.game_over {
+        if self.game_state == GameState::GameOver {
             draw_rectangle(COLOR_GAMEOVER, 0, 0, self.width, self.height, con, g);
         }
 
-        if self.page_renderer.is_open() {
-            self.page_renderer.draw(COLOR_BLACK, &con, g, glyphs);
+        if self.game_state == GameState::Paused {
+            self.page_renderer
+                .draw_game_state_page(self.game_state, &con, g, glyphs);
             return;
         }
 
@@ -193,7 +200,8 @@ impl Game {
     }
 
     fn enable_help(&mut self) {
-        self.page_renderer.open_help()
+        self.game_state = GameState::Paused;
+        self.page_renderer.open_help();
     }
 
     fn restart(&mut self) {
@@ -206,8 +214,7 @@ impl Game {
         // create new secret
         self.secret = Game::create_new_secret(self.debug);
         // reset gameover / success
-        self.game_over = false;
-        self.game_won = false;
+        self.game_state = GameState::Start;
         // reset guess input field
         self.guess_input_field.reset_guess();
         // enable input field
@@ -246,10 +253,10 @@ impl Game {
         self.guess_pointer += 1;
         // check success or game over
         if black_pins == 4 {
-            self.game_won = true;
+            self.game_state = GameState::GameWon;
             self.handle_game_end();
         } else if self.guess_pointer == self.number_of_guesses {
-            self.game_over = true;
+            self.game_state = GameState::GameOver;
             self.handle_game_end();
         }
     }

@@ -1,6 +1,6 @@
 use piston_window::{text, types::Color, Context, G2d, Glyphs, Key, Transformed};
 
-use crate::COLOR_BLACK;
+use crate::{game::GameState, COLOR_BLACK};
 
 const START_PAGE: &str = "Hello World!";
 
@@ -48,23 +48,37 @@ pub struct PageRenderer {
     size: u32,
     x: f64,
     y: f64,
-    current_depth: u8,
+    open: bool,
+    current_depth: i32,
 }
 impl PageRenderer {
-    pub fn new(size: u32, x: f64, y: f64) -> PageRenderer {
+    pub fn new(size: u32, x: f64, y: f64, open: bool) -> PageRenderer {
         return PageRenderer {
             size,
             x,
             y,
+            open,
             current_depth: 0,
         };
     }
 
-    pub fn draw_start_page(&self, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
-        self.draw_page(START_PAGE, COLOR_BLACK, con, g, glyphs);
+    pub fn draw_game_state_page(
+        &self,
+        game_state: GameState,
+        con: &Context,
+        g: &mut G2d,
+        glyphs: &mut Glyphs,
+    ) {
+        match game_state {
+            GameState::Start => self.draw_page(START_PAGE, COLOR_BLACK, con, g, glyphs),
+            GameState::Running => todo!(),
+            GameState::Paused => self.draw(COLOR_BLACK, con, g, glyphs),
+            GameState::GameOver => todo!(),
+            GameState::GameWon => todo!(),
+        }
     }
 
-    pub fn draw(&self, color: Color, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
+    fn draw(&self, color: Color, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
         match self.current_depth {
             1 => self.draw_page(HELP_MESSAGE, color, con, g, glyphs),
             2 => self.draw_page(GENERAL_INFO, color, con, g, glyphs),
@@ -79,14 +93,18 @@ impl PageRenderer {
             Key::G => self.current_depth = 2,
             _ => (),
         }
+        if self.current_depth < 0 {
+            self.open = false;
+        }
+    }
+
+    pub fn is_open(&self) -> bool {
+        return self.open;
     }
 
     pub fn open_help(&mut self) {
         self.current_depth = 1;
-    }
-
-    pub fn is_open(&self) -> bool {
-        return self.current_depth > 0;
+        self.open = true;
     }
 
     fn draw_page(&self, text: &str, color: Color, con: &Context, g: &mut G2d, glyphs: &mut Glyphs) {
