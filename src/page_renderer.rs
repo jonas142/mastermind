@@ -2,7 +2,15 @@ use piston_window::{text, types::Color, Context, G2d, Glyphs, Key, Transformed};
 
 use crate::COLOR_BLACK;
 
-const START_PAGE: &str = "Hello World!";
+const START_PAGE: &str = "                    Welcome to Mastermind!
+\r\n
+\r\n
+\r\n  
+\r\n         |  Press 'S' to start the game   |
+\r\n
+\r\n
+\r\n
+\r\n         |  Press 'H' to open the help   |";
 
 const GAMEOVER_PAGE: &str = "Hello World!";
 
